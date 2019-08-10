@@ -9,4 +9,4 @@ via the [Creative Commons Attribute 4.0 International License](http://creativeco
 If you're looking for a command line tool to generate and work with MIDI files, check out
 [the `atm-cli` project](https://github.com/allthemusicllc/atm-cli) that utilizes this library. For
 more information on All the Music, check out [allthemusic.info](http://allthemusic.info).  For more detailed
-library documentation, check out the crate documentation [here](https://github.com/allthemusicllc/libatm/libatm/index.html).
+library documentation, check out the crate documentation [here](https://allthemusicllc.github.io/libatm/libatm/index.html).
