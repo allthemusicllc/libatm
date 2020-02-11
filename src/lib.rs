@@ -9,15 +9,11 @@
 //! `libatm` is a library for generating and working with MIDI files.  It was purpose-built for
 //! All the Music, LLC to assist in its mission to enable musicians to make all of their music
 //! without the fear of frivolous copyright lawsuits.  All code is released into the public domain
-//! via the [Creative Commons Attribute 4.0 International License](http://creativecommons.org/licenses/by/4.0/). 
+//! via the [Creative Commons Attribute 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
+//!
 //! If you're looking for a command line tool to generate and work with MIDI files, check out
 //! [the `atm-cli` project](https://github.com/allthemusicllc/atm-cli) that utilizes this library.  For
 //! more information on All the Music, check out [allthemusic.info](http://allthemusic.info).
-
-// Allow dead code
-#![allow(unused_parens)]
-
-extern crate byteorder;
 
 /// MIDI file format
 ///
@@ -66,7 +62,7 @@ pub enum MIDIStatus {
 ///
 /// Represents each note in an octave, where each "*Sharp" value
 /// is an enharmonic key.  Each note type must be combined with an
-/// integer value to fully represent a key on the piano (see: [MIDINote](struct.MIDINote.html)).
+/// integer value to fully represent a key on the piano (see: [`MIDINote`](struct.MIDINote.html)).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MIDINoteType {
     C,
@@ -134,7 +130,7 @@ impl MIDINote {
     ///
     /// # Arguments
     ///
-    /// * `note_type`: [MIDINoteType](enum.MIDINoteType.html)
+    /// * `note_type`: [`MIDINoteType`](enum.MIDINoteType.html)
     /// * `octave`: integer between -1 and 9
     ///
     /// # Examples
@@ -149,13 +145,13 @@ impl MIDINote {
     ///
     /// The `octave` parameter is not validated, but must be between
     /// -1 and 9 in order to represent a valid MIDI note.
-    pub fn new(note_type: MIDINoteType, octave: u32) -> MIDINote {
-        MIDINote { note_type, octave }
+    pub fn new(note_type: MIDINoteType, octave: u32) -> Self {
+        Self { note_type, octave }
     }
 
     /// Convert MIDI note to an integer representation (MIDI note number)
-    pub fn convert(&self) -> u32 {
-        return (self.note_type as u32) + ((self.octave + 1) * 12);
+    pub fn convert(self) -> u32 {
+        (self.note_type as u32) + ((self.octave + 1) * 12)
     }
 }
 
@@ -204,7 +200,7 @@ impl std::str::FromStr for MIDINote {
 
 /// Container for sequence of `MIDINote`
 ///
-/// Implements the [FromStr](https://doc.rust-lang.org/nightly/core/str/trait.FromStr.html)
+/// Implements the [`FromStr`](https://doc.rust-lang.org/nightly/core/str/trait.FromStr.html)
 /// trait as a convenience method for parsing a `MIDINote` sequence from a command line
 /// argument.
 ///
@@ -225,8 +221,8 @@ pub struct MIDINoteSequence {
 }
 
 impl MIDINoteSequence {
-    pub fn new(notes: Vec<MIDINote>) -> MIDINoteSequence {
-        MIDINoteSequence { notes }
+    pub fn new(notes: Vec<MIDINote>) -> Self {
+        Self { notes }
     }
 }
 
@@ -278,9 +274,9 @@ impl MIDIChannelVoiceMessage {
     /// # Arguments
     ///
     /// * `delta_time`: time delta since last MIDI channel message
-    /// * `note`: [MIDINote](struct.MIDINote.html) to play
+    /// * `note`: [`MIDINote`](struct.MIDINote.html) to play
     /// * `velocity`: velocity with which to play the note
-    /// * `status`: [MIDIStatus](enum.MIDIStatus.html) bits of the message
+    /// * `status`: [`MIDIStatus`](enum.MIDIStatus.html) bits of the message
     /// * `channel`: channel on which to play the message
     ///
     /// # Examples
@@ -289,35 +285,35 @@ impl MIDIChannelVoiceMessage {
     /// // Create Middle C note and two MIDI events, one to "press" the key and
     /// // one to "release" they key after 5 ticks.
     /// let note = libatm::MIDINote::new(libatm::MIDINoteType::C, 4);
-    /// let note_on_event = libatm::MIDIChannelVoiceMessage::new(0, &note, 0x64, libatm::MIDIStatus::NoteOn, 0);
-    /// let note_off_event = libatm::MIDIChannelVoiceMessage::new(5, &note, 0, libatm::MIDIStatus::RunningStatus, 0);
+    /// let note_on_event = libatm::MIDIChannelVoiceMessage::new(0, note, 0x64, libatm::MIDIStatus::NoteOn, 0);
+    /// let note_off_event = libatm::MIDIChannelVoiceMessage::new(5, note, 0, libatm::MIDIStatus::RunningStatus, 0);
     /// ```
     ///
     /// # Notes
     ///
-    /// * The meaning of the delta_time unit is determined by the `division` value present 
-    ///   in the [MIDIHeader](struct.MIDIHeader.html).
-    /// * A `NoteOn` event with a velocity of 0 is equivalent to a NoteOff event.  This library
+    /// * The meaning of the `delta_time` unit is determined by the `division` value present
+    ///   in the [`MIDIHeader`](struct.MIDIHeader.html).
+    /// * A `NoteOn` event with a velocity of 0 is equivalent to a `NoteOff` event.  This library
     ///   heavily exploits this feature, as well as running status, to produce the smallest
     ///   possible MIDI files.
     pub fn new(
         delta_time: u8,
-        note: &MIDINote,
+        note: MIDINote,
         velocity: u8,
         status: MIDIStatus,
         channel: u8,
-    ) -> MIDIChannelVoiceMessage {
+    ) -> Self {
         assert!(channel < 0x10); // 0 <= channel < 0x10 (16)
         assert!(velocity < 0x80); // 0 <= velocity < 0x80 (128)
         let event_status = match status {
             MIDIStatus::RunningStatus => 0,
             _ => (((status as u8) << 4) | channel),
         };
-        MIDIChannelVoiceMessage {
-            delta_time: delta_time,
+        Self {
+            delta_time,
             status: event_status,
             note: (note.convert() as u8),
-            velocity: velocity,
+            velocity,
         }
     }
 
@@ -337,13 +333,13 @@ impl MIDIChannelVoiceMessage {
     /// // Middle C
     /// let note = libatm::MIDINote::new(libatm::MIDINoteType::C, 4);
     /// // Play for 5 ticks
-    /// let note_on_event = libatm::MIDIChannelVoiceMessage::new(0, &note, 0x64, libatm::MIDIStatus::NoteOn, 0);
-    /// let note_off_event = libatm::MIDIChannelVoiceMessage::new(5, &note, 0, libatm::MIDIStatus::RunningStatus, 0);
+    /// let note_on_event = libatm::MIDIChannelVoiceMessage::new(0, note, 0x64, libatm::MIDIStatus::NoteOn, 0);
+    /// let note_off_event = libatm::MIDIChannelVoiceMessage::new(5, note, 0, libatm::MIDIStatus::RunningStatus, 0);
     /// // Write notes to buffer
     /// note_on_event.write_buffer(&mut buffer).unwrap();
     /// note_off_event.write_buffer(&mut buffer).unwrap();
     /// ```
-    pub fn write_buffer<T>(&self, target: &mut T) -> std::io::Result<()>
+    pub fn write_buffer<T>(self, target: &mut T) -> std::io::Result<()>
     where
         T: byteorder::WriteBytesExt,
     {
@@ -359,7 +355,7 @@ impl MIDIChannelVoiceMessage {
 
 /// MIDI track chunk header
 ///
-///  Encapsulates the chunk type ('MTrk') and the length
+///  Encapsulates the chunk type (`MTrk`) and the length
 ///  of a MIDI track chunk.  The official MIDI spec does
 ///  not refer to these data as the truck chunk header, this
 ///  library simply makes the distinction for ease of use.
@@ -371,8 +367,8 @@ pub struct MIDITrackHeader {
 
 impl MIDITrackHeader {
     /// Create new `MIDITrackHeader`
-    pub fn new(chunk_type: Vec<u8>, length: u32) -> MIDITrackHeader {
-        MIDITrackHeader { chunk_type, length }
+    pub fn new(chunk_type: Vec<u8>, length: u32) -> Self {
+        Self { chunk_type, length }
     }
 
     /// Write track chunk header to buffer
@@ -380,7 +376,7 @@ impl MIDITrackHeader {
     where
         T: byteorder::WriteBytesExt,
     {
-        for elem in self.chunk_type.iter() {
+        for elem in &self.chunk_type {
             target.write_u8(*elem)?;
         }
         target.write_u32::<byteorder::BigEndian>(self.length)?;
@@ -390,7 +386,7 @@ impl MIDITrackHeader {
 
 /// MIDI file header
 ///
-/// Unlike the [MIDITrackHeader](struct.MIDITrackHeader.html), this structure is
+/// Unlike the [`MIDITrackHeader`](struct.MIDITrackHeader.html), this structure is
 /// specified in the official MIDI spec (as "Header Chunk"), though the last three 16-bit
 /// fields are simply referred to as "Data".  For a more detailed discussion of the
 /// Header Chunk, see section 2.1 of the document here:
@@ -412,8 +408,8 @@ impl MIDIHeader {
         format: MIDIFormat,
         tracks: u16,
         division: u16,
-    ) -> MIDIHeader {
-        MIDIHeader {
+    ) -> Self {
+        Self {
             chunk_type,
             length,
             format: format as u16,
@@ -427,7 +423,7 @@ impl MIDIHeader {
     where
         T: byteorder::WriteBytesExt,
     {
-        for elem in self.chunk_type.iter() {
+        for elem in &self.chunk_type {
             target.write_u8(*elem)?;
         }
         target.write_u32::<byteorder::BigEndian>(self.length)?;
@@ -481,13 +477,8 @@ impl MIDIFile {
     /// );
     /// assert_eq!("607410951", mfile.gen_hash());
     /// ```
-    pub fn new(
-        sequence: MIDINoteSequence,
-        format: MIDIFormat,
-        tracks: u16,
-        division: u16,
-    ) -> MIDIFile {
-        MIDIFile {
+    pub fn new(sequence: MIDINoteSequence, format: MIDIFormat, tracks: u16, division: u16) -> Self {
+        Self {
             sequence,
             format,
             tracks,
@@ -495,16 +486,16 @@ impl MIDIFile {
         }
     }
 
-    /// Generate the size in bytes of the track chunk for a MIDI file 
+    /// Generate the size in bytes of the track chunk for a MIDI file
     /// with a sequence of length `num_notes` once written to disk
     pub fn gen_track_size_static(num_notes: u32) -> u32 {
         (num_notes * 6) + 1
     }
 
-    /// Generate the size in bytes of a MIDI file with a sequence of length 
+    /// Generate the size in bytes of a MIDI file with a sequence of length
     /// `num_notes` once written to disk
     pub fn gen_size_static(num_notes: u32) -> u32 {
-        22 + MIDIFile::gen_track_size_static(num_notes)
+        22 + Self::gen_track_size_static(num_notes)
     }
 
     /// Generate unique hash for this file's `MIDINoteSequence`
@@ -519,7 +510,7 @@ impl MIDIFile {
         itertools::join(self.sequence.notes.iter().map(|note| note.convert()), "")
     }
 
-    /// Generate header chunk (see: [MIDIHeader](struct.MIDIHeader.html))
+    /// Generate header chunk (see: [`MIDIHeader`](struct.MIDIHeader.html))
     pub fn gen_header(&self) -> MIDIHeader {
         MIDIHeader::new(
             vec![0x4d, 0x54, 0x68, 0x64], // 'MThd'
@@ -532,10 +523,10 @@ impl MIDIFile {
 
     /// Generate the size in bytes of the track chunk once written to disk
     pub fn gen_track_size(&self) -> u32 {
-        MIDIFile::gen_track_size_static(self.sequence.notes.len() as u32)
+        Self::gen_track_size_static(self.sequence.notes.len() as u32)
     }
 
-    /// Generate track chunk header (see: [MIDITrackHeader](struct.MIDITrackHeader.html))
+    /// Generate track chunk header (see: [`MIDITrackHeader`](struct.MIDITrackHeader.html))
     pub fn gen_track_header(&self) -> MIDITrackHeader {
         MIDITrackHeader::new(
             vec![0x4d, 0x54, 0x72, 0x6b], // 'MTrk'
@@ -543,16 +534,19 @@ impl MIDIFile {
         )
     }
 
-    /// Generate track data (see: [MIDIChannelVoiceMessage](struct.MIDIChannelVoiceMessage.html))
+    /// Generate track data (see: [`MIDIChannelVoiceMessage`](struct.MIDIChannelVoiceMessage.html))
     pub fn gen_track(&self) -> Vec<MIDIChannelVoiceMessage> {
-        let mut track: Vec<MIDIChannelVoiceMessage> = Vec::with_capacity(self.sequence.notes.len() * 2);
+        let mut track = Vec::with_capacity(self.sequence.notes.len() * 2);
+
         let delta_time = self.division as u8;
+
         for (idx, &note) in self.sequence.notes.iter().enumerate() {
             let note_on_event = match idx {
-                0 => MIDIChannelVoiceMessage::new(0, &note, 0x64, MIDIStatus::NoteOn, 0),
-                _ => MIDIChannelVoiceMessage::new(0, &note, 0x64, MIDIStatus::RunningStatus, 0),
+                0 => MIDIChannelVoiceMessage::new(0, note, 0x64, MIDIStatus::NoteOn, 0),
+                _ => MIDIChannelVoiceMessage::new(0, note, 0x64, MIDIStatus::RunningStatus, 0),
             };
-            let note_off_event = MIDIChannelVoiceMessage::new(delta_time, &note, 0, MIDIStatus::RunningStatus, 0);
+            let note_off_event =
+                MIDIChannelVoiceMessage::new(delta_time, note, 0, MIDIStatus::RunningStatus, 0);
             track.push(note_on_event);
             track.push(note_off_event);
         }
@@ -561,7 +555,7 @@ impl MIDIFile {
 
     /// Generate the size in bytes of this MIDI file once written to disk
     pub fn gen_size(&self) -> u32 {
-        MIDIFile::gen_size_static(self.sequence.notes.len() as u32)
+        Self::gen_size_static(self.sequence.notes.len() as u32)
     }
 
     /// Write MIDI file to buffer
@@ -576,7 +570,7 @@ impl MIDIFile {
         track_header.write_buffer(target)?;
 
         let track = self.gen_track();
-        for event in track.iter() {
+        for event in &track {
             event.write_buffer(target)?;
         }
         Ok(())
@@ -584,7 +578,7 @@ impl MIDIFile {
 
     /// Generate buffer containing entire MIDI file
     pub fn gen_buffer(&self) -> std::io::Result<Vec<u8>> {
-        let mut buffer = Vec::with_capacity(self.gen_size() as usize);   
+        let mut buffer = Vec::with_capacity(self.gen_size() as usize);
         self.write_buffer(&mut buffer)?;
         Ok(buffer)
     }
@@ -617,26 +611,28 @@ mod tests {
     #[test]
     fn test_midinotesequence_fromstr() {
         let sequence = "C:4,D:4,E:4".parse::<MIDINoteSequence>().unwrap();
-        assert!(
-            sequence.notes.len() == 3
-                && sequence.notes[0] == MIDINote::new(MIDINoteType::C, 4)
-                && sequence.notes[1] == MIDINote::new(MIDINoteType::D, 4)
-                && sequence.notes[2] == MIDINote::new(MIDINoteType::E, 4)
+        assert_eq!(
+            sequence.notes,
+            &[
+                MIDINote::new(MIDINoteType::C, 4),
+                MIDINote::new(MIDINoteType::D, 4),
+                MIDINote::new(MIDINoteType::E, 4)
+            ]
         );
     }
 
     #[test]
     fn test_midievent_noteon() {
         let note = MIDINote::new(MIDINoteType::C, 4);
-        let event = MIDIChannelVoiceMessage::new(0, &note, 100, MIDIStatus::NoteOn, 0);
-        let status = 0b10010000;
+        let event = MIDIChannelVoiceMessage::new(0, note, 100, MIDIStatus::NoteOn, 0);
+        let status = 0b1001_0000;
         assert_eq!(status, event.status);
     }
 
     #[test]
     fn test_midievent_runningstatus() {
         let note = MIDINote::new(MIDINoteType::C, 4);
-        let event = MIDIChannelVoiceMessage::new(0, &note, 100, MIDIStatus::RunningStatus, 0);
+        let event = MIDIChannelVoiceMessage::new(0, note, 100, MIDIStatus::RunningStatus, 0);
         assert_eq!(0, event.status);
     }
 
