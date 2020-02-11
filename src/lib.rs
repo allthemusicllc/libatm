@@ -83,25 +83,36 @@ pub enum MIDINoteType {
     B,
 }
 
+/// An error which can be returned when parsing a [`MIDINoteType`](struct.MIDINoteType.html)
+#[derive(Clone, Debug, Eq, PartialEq, thiserror::Error)]
+pub enum ParseMIDINoteTypeError {
+    #[error("invalid node type")]
+    InvalidNoteType,
+}
+
 impl std::str::FromStr for MIDINoteType {
-    type Err = ();
+    type Err = ParseMIDINoteTypeError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "C" => Ok(MIDINoteType::C),
-            "CSharp" => Ok(MIDINoteType::CSharp),
-            "D" => Ok(MIDINoteType::D),
-            "DSharp" => Ok(MIDINoteType::DSharp),
-            "E" => Ok(MIDINoteType::E),
-            "F" => Ok(MIDINoteType::F),
-            "FSharp" => Ok(MIDINoteType::FSharp),
-            "G" => Ok(MIDINoteType::G),
-            "GSharp" => Ok(MIDINoteType::GSharp),
-            "A" => Ok(MIDINoteType::A),
-            "ASharp" => Ok(MIDINoteType::ASharp),
-            "B" => Ok(MIDINoteType::B),
-            _ => Err(()),
-        }
+        use MIDINoteType::*;
+
+        let note_type = match s {
+            "C" => C,
+            "CSharp" => CSharp,
+            "D" => D,
+            "DSharp" => DSharp,
+            "E" => E,
+            "F" => F,
+            "FSharp" => FSharp,
+            "G" => G,
+            "GSharp" => GSharp,
+            "A" => A,
+            "ASharp" => ASharp,
+            "B" => B,
+            _ => return Err(ParseMIDINoteTypeError::InvalidNoteType),
+        };
+
+        Ok(note_type)
     }
 }
 
@@ -148,14 +159,46 @@ impl MIDINote {
     }
 }
 
+/// An error which can be returned when parsing a [`MIDINote`](struct.MIDINote.html)
+#[derive(Clone, Debug, Eq, PartialEq, thiserror::Error)]
+pub enum ParseMIDINoteError {
+    #[error("missing note type")]
+    MissingNoteType,
+
+    #[error("invalid note type")]
+    ParseNoteType(#[from] ParseMIDINoteTypeError),
+
+    #[error("missing octave")]
+    MissingOctave,
+
+    #[error("invalid octave")]
+    ParseOctave(#[from] std::num::ParseIntError),
+
+    #[error("trailing characters")]
+    TrailingCharacters,
+}
+
 impl std::str::FromStr for MIDINote {
-    type Err = ();
+    type Err = ParseMIDINoteError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let split_pair: Vec<&str> = s.split(':').collect();
-        let note_type = split_pair[0].parse::<MIDINoteType>()?;
-        let octave = split_pair[1].parse::<u32>().map_err(|_| ())?;
-        Ok(MIDINote { note_type, octave })
+        use ParseMIDINoteError::*;
+
+        let mut split_pair = s.split(':');
+
+        let note_type = split_pair
+            .next()
+            .ok_or(MissingNoteType)?
+            .parse::<MIDINoteType>()?;
+
+        let octave = split_pair.next().ok_or(MissingOctave)?.parse::<u32>()?;
+
+        // assert the iterator is empty
+        if split_pair.next().is_some() {
+            return Err(TrailingCharacters);
+        }
+
+        Ok(Self { note_type, octave })
     }
 }
 
@@ -187,16 +230,27 @@ impl MIDINoteSequence {
     }
 }
 
+/// An error which can be returned when parsing a [`MIDINoteSequence`](struct.MIDINoteSequence.html)
+#[derive(Clone, Debug, Eq, PartialEq, thiserror::Error)]
+pub enum ParseMIDINoteSequenceError {
+    #[error("invalid note at index {0}")]
+    ParseNote(usize, #[source] ParseMIDINoteError),
+}
+
 impl std::str::FromStr for MIDINoteSequence {
-    type Err = ();
+    type Err = ParseMIDINoteSequenceError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let notes: Vec<&str> = s.split(",").collect();
-        let notes: Vec<MIDINote> = notes
-            .iter()
-            .map(|&pair| pair.parse::<MIDINote>().unwrap())
-            .collect::<Vec<MIDINote>>();
-        Ok(MIDINoteSequence { notes })
+        let notes = s
+            .split(',')
+            .enumerate()
+            .map(|(idx, pair)| {
+                pair.parse::<MIDINote>()
+                    .map_err(|e| ParseMIDINoteSequenceError::ParseNote(idx, e))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(Self { notes })
     }
 }
 
@@ -462,12 +516,7 @@ impl MIDIFile {
     /// once a file has been written to disk, and thus there is no requirement
     /// to mitigate collisions for identical sequences.
     pub fn gen_hash(&self) -> String {
-        self.sequence
-            .notes
-            .iter()
-            .map(|&note| note.convert().to_string())
-            .collect::<Vec<String>>()
-            .join("")
+        itertools::join(self.sequence.notes.iter().map(|note| note.convert()), "")
     }
 
     /// Generate header chunk (see: [MIDIHeader](struct.MIDIHeader.html))
