@@ -507,7 +507,15 @@ impl MIDIFile {
     /// once a file has been written to disk, and thus there is no requirement
     /// to mitigate collisions for identical sequences.
     pub fn gen_hash(&self) -> String {
-        itertools::join(self.sequence.notes.iter().map(|note| note.convert()), "")
+        use std::fmt::Write;
+
+        let mut hash = String::with_capacity(self.sequence.notes.len() * 2);
+
+        for note in &self.sequence.notes {
+            let _ = write!(hash, "{}", note.convert());
+        }
+
+        hash
     }
 
     /// Generate header chunk (see: [`MIDIHeader`](struct.MIDIHeader.html))
