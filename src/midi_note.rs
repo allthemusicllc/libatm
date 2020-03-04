@@ -18,7 +18,7 @@ pub enum ParseMIDINoteTypeError {
 /// Represents each note in an octave, where each "*Sharp" value
 /// is an enharmonic key.  Each note type must be combined with an
 /// integer value to fully represent a key on the piano (see: [MIDINote](struct.MIDINote.html)).
-/// The Empty note type represents silence, or the absence of a note.
+/// The `Rest` note type represents silence, or the absence of a note.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum MIDINoteType {
     A,
@@ -33,7 +33,7 @@ pub enum MIDINoteType {
     FSharp,
     G,
     GSharp,
-    Empty,
+    Rest,
 }
 
 impl<'a> std::str::FromStr for MIDINoteType {
@@ -41,23 +41,49 @@ impl<'a> std::str::FromStr for MIDINoteType {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "c" => Ok(Self::C),
-            "csharp" | "c#" => Ok(Self::CSharp),
-            "dflat" | "d♭" => Ok(Self::CSharp),
+            "bsharp"
+            | "b#"
+            | "c" => Ok(Self::C),
+            "csharp"
+            | "c#"
+            | "dflat"
+            | "d♭"
+            | "db" => Ok(Self::CSharp),
             "d" => Ok(Self::D),
-            "dsharp" | "d#" => Ok(Self::DSharp),
-            "eflat" | "e♭" => Ok(Self::DSharp),
-            "e" => Ok(Self::E),
-            "f" => Ok(Self::F),
-            "fsharp" | "f#" => Ok(Self::FSharp),
-            "gflat" | "g♭" => Ok(Self::FSharp),
+            "dsharp"
+            | "d#"
+            | "eflat"
+            | "e♭"
+            | "eb" => Ok(Self::DSharp),
+            "e"
+            | "fflat"
+            | "f♭"
+            | "fb" => Ok(Self::E),
+            "esharp"
+            | "e#"
+            | "f" => Ok(Self::F),
+            "fsharp"
+            | "f#"
+            | "gflat"
+            | "g♭"
+            | "gb" => Ok(Selg::FSharp),
             "g" => Ok(Self::G),
-            "gsharp" | "g#" => Ok(Self::GSharp),
-            "aflat" | "a♭" => Ok(Self::GSharp),
+            "gsharp"
+            | "g#"
+            | "aflat"
+            | "a♭"
+            | "ab" => Ok(Sela::GSharp),
             "a" => Ok(Self::A),
-            "asharp" | "a#" => Ok(Self::ASharp),
-            "b" => Ok(Self::B),
-            "empty" | "none" => Ok(Self::Empty),
+            "asharp"
+            | "a#"
+            | "bflat"
+            | "b♭"
+            | "bb" => Ok(Sela::ASharp),
+            "cflat"
+            | "c♭"
+            | "cb"
+            | "b" => Ok(Self::B),
+            "rest" | "empty" => Ok(Self::Rest),
             _ => Err(ParseMIDINoteTypeError::UnknownNoteType {
                 input: s.to_string(),
             }),
@@ -123,7 +149,7 @@ impl MIDINote {
     /// distinguishable.
     pub fn convert(&self) -> u32 {
         match &self.note_type {
-            MIDINoteType::Empty => u32::max_value(),
+            MIDINoteType::Rest => u32::max_value(),
             _ => (self.note_type as u32) + (self.octave + 1) * 12,
         }
     }

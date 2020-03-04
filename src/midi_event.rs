@@ -57,7 +57,7 @@ impl MIDIChannelVoiceMessage {
     /// # Arguments
     ///
     /// * `delta_time`: time delta since last MIDI channel message
-    /// * `note`: [MIDINote](struct.MIDINote.html) to play
+    /// * `note`: [MIDINote](../midi_note/struct.MIDINote.html) to play
     /// * `velocity`: velocity with which to play the note
     /// * `status`: [MIDIStatus](enum.MIDIStatus.html) bits of the message
     /// * `channel`: channel on which to play the message
@@ -75,11 +75,11 @@ impl MIDIChannelVoiceMessage {
     /// # Notes
     ///
     /// * The meaning of the delta_time unit is determined by the `division` value present
-    ///   in the [MIDIHeader](struct.MIDIHeader.html).
+    ///   in the [MIDIHeader](../midi_file/struct.MIDIHeader.html).
     /// * A `NoteOn` event with a velocity of 0 is equivalent to a NoteOff event.  This library
     ///   heavily exploits this feature, as well as running status, to produce the smallest
     ///   possible MIDI files.
-    /// * If the note type is [MIDINoteType::Empty](enum.MIDINoteType.html#variant.Empty)
+    /// * If the note type is [MIDINoteType::Rest](../midi_note/enum.MIDINoteType.html#variant.Rest)
     ///   then the velocity will automatically get set to 0.
     pub fn new(
         delta_time: u8,
@@ -93,9 +93,9 @@ impl MIDIChannelVoiceMessage {
         // 0 <= velocity < 0x80 (128)
         assert!(velocity < 0x80);
 
-        // If note type is Empty, velocity must be 0
+        // If note type is Rest, velocity must be 0
         let velocity = match note.note_type {
-            crate::midi_note::MIDINoteType::Empty => 0u8,
+            crate::midi_note::MIDINoteType::Rest => 0u8,
             _ => velocity,
         };
 
@@ -146,4 +146,12 @@ impl MIDIChannelVoiceMessage {
         target.write_u8(self.velocity)?;
         Ok(())
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+
 }

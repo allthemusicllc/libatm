@@ -139,10 +139,6 @@ pub struct MIDIFile {
 impl MIDIFile {
     /// Create new `MIDIFile`
     ///
-    /// # Arguments
-    ///
-    /// See field comments [above](struct.MIDIFile.html#structfield.sequence).
-    ///
     /// # Examples
     ///
     /// ```rust
@@ -173,14 +169,13 @@ impl MIDIFile {
         }
     }
 
-    /// Generate unique hash for this file's `MIDINoteSet`
+    /// Generate unique hash for this file's `MIDINote` sequence
     ///
     /// This hash function simply concatenates the sequential integer
-    /// representation of the file's `MIDINotesequence`.  By this definition,
+    /// representation of the file's sequence of `MIDINote`.  By this definition,
     /// no two non-identical sequences can have the same hash.  The primary
     /// intended purpose of this function is to allow for O(1) lookups by note sequence
-    /// once a file has been written to disk, and thus there is no requirement
-    /// to mitigate collisions for identical sequences.
+    /// once a file has been written to disk.
     pub fn gen_hash(&self) -> String {
         self
             .sequence
@@ -214,7 +209,7 @@ impl MIDIFile {
         )
     }
 
-    /// Generate track data (see: [MIDIChannelVoiceMessage](struct.MIDIChannelVoiceMessage.html))
+    /// Generate track data (see: [MIDIChannelVoiceMessage](../midi_event/struct.MIDIChannelVoiceMessage.html))
     pub fn gen_track(&self) -> Vec<MIDIChannelVoiceMessage> {
         let mut track: Vec<MIDIChannelVoiceMessage> = Vec::with_capacity(self.sequence.len() * 2);
         let delta_time = self.division as u8;
