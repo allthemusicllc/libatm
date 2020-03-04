@@ -66,19 +66,19 @@ impl<'a> std::str::FromStr for MIDINoteType {
             | "f#"
             | "gflat"
             | "g♭"
-            | "gb" => Ok(Selg::FSharp),
+            | "gb" => Ok(Self::FSharp),
             "g" => Ok(Self::G),
             "gsharp"
             | "g#"
             | "aflat"
             | "a♭"
-            | "ab" => Ok(Sela::GSharp),
+            | "ab" => Ok(Self::GSharp),
             "a" => Ok(Self::A),
             "asharp"
             | "a#"
             | "bflat"
             | "b♭"
-            | "bb" => Ok(Sela::ASharp),
+            | "bb" => Ok(Self::ASharp),
             "cflat"
             | "c♭"
             | "cb"
