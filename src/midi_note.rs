@@ -21,9 +21,6 @@ pub enum ParseMIDINoteTypeError {
 /// The `Rest` note type represents silence, or the absence of a note.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum MIDINoteType {
-    A,
-    ASharp,
-    B,
     C,
     CSharp,
     D,
@@ -33,6 +30,9 @@ pub enum MIDINoteType {
     FSharp,
     G,
     GSharp,
+    A,
+    ASharp,
+    B,
     Rest,
 }
 
