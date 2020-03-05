@@ -151,5 +151,12 @@ impl MIDIChannelVoiceMessage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
+    #[test]
+    #[should_panic]
+    fn test_midi_channel_message_invalid_channel() {
+        let note = crate::midi_note::MIDINote::new(crate::midi_note::MIDINoteType::C, 4);
+        // Invalid channel 0x11
+        let _ = MIDIChannelVoiceMessage::new(0, &note, 0x64, MIDIStatus::NoteOn, 0x11);
+    }
 }
