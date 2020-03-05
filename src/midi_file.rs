@@ -211,18 +211,23 @@ impl MIDIFile {
 
     /// Generate track data (see: [MIDIChannelVoiceMessage](../midi_event/struct.MIDIChannelVoiceMessage.html))
     pub fn gen_track(&self) -> Vec<MIDIChannelVoiceMessage> {
-        let mut track: Vec<MIDIChannelVoiceMessage> = Vec::with_capacity(self.sequence.len() * 2);
         let delta_time = self.division as u8;
-        for (idx, &note) in self.sequence.iter().enumerate() {
-            let note_on_event = match idx {
-                0 => MIDIChannelVoiceMessage::new(0, &note, 0x64, MIDIStatus::NoteOn, 0,),
-                _ => MIDIChannelVoiceMessage::new(0, &note, 0x64, MIDIStatus::RunningStatus, 0,),
-            };
-            let note_off_event = MIDIChannelVoiceMessage::new(delta_time, &note, 0, MIDIStatus::RunningStatus, 0,);
-            track.push(note_on_event);
-            track.push(note_off_event);
-        }
-        track
+        self
+            .sequence
+            .iter()
+            .enumerate()
+            .map(|(idx, note)| {
+                let first_status = match idx {
+                    0 => MIDIStatus::NoteOn,
+                    _ => MIDIStatus::RunningStatus,
+                };
+                vec![
+                    MIDIChannelVoiceMessage::new(0, &note, 0x64, first_status, 0,),
+                    MIDIChannelVoiceMessage::new(delta_time, &note, 0, MIDIStatus::RunningStatus, 0,)
+                ]
+            })
+            .flatten()
+            .collect::<Vec<MIDIChannelVoiceMessage>>()
     }
 
     /// Generate the size of this MIDI file in bytes (on disk)
@@ -249,14 +254,14 @@ impl MIDIFile {
     }
 
     /// Generate buffer containing entire MIDI file
-    pub fn gen_buffer(&self) -> std::io::Result<Vec<u8>> {
+    pub fn gen_file(&self) -> std::io::Result<Vec<u8>> {
         let mut buffer = Vec::with_capacity(self.gen_size() as usize);
         self.write_buffer(&mut buffer)?;
         Ok(buffer)
     }
 
     /// Write MIDI file to path on disk
-    pub fn write_file(&self, path: &str) -> std::io::Result<()> {
+    pub fn write_file<P: AsRef<std::path::Path>>(&self, path: P) -> std::io::Result<()> {
         let target_file = std::fs::File::create(path)?;
         let mut target_file = std::io::BufWriter::new(target_file);
         self.write_buffer(&mut target_file)?;
