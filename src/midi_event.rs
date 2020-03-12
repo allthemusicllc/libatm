@@ -74,13 +74,13 @@ impl MIDIChannelVoiceMessage {
     ///
     /// # Notes
     ///
-    /// * The meaning of the delta_time unit is determined by the `division` value present
+    /// * The meaning of `delta_time` is determined by the `division` value present
     ///   in the [MIDIHeader](../midi_file/struct.MIDIHeader.html).
-    /// * A `NoteOn` event with a velocity of 0 is equivalent to a NoteOff event.  This library
+    /// * A `NoteOn` event with a velocity of 0 is equivalent to a `NoteOff` event.  This library
     ///   heavily exploits this feature, as well as running status, to produce the smallest
     ///   possible MIDI files.
     /// * If the note type is [MIDINoteType::Rest](../midi_note/enum.MIDINoteType.html#variant.Rest)
-    ///   then the velocity will automatically get set to 0.
+    ///   then the velocity will automatically be set to 0 (equivalent to a `NoteOff` event).
     pub fn new(
         delta_time: u8,
         note: &crate::midi_note::MIDINote,
@@ -158,5 +158,20 @@ mod tests {
         let note = crate::midi_note::MIDINote::new(crate::midi_note::MIDINoteType::C, 4);
         // Invalid channel 0x11
         let _ = MIDIChannelVoiceMessage::new(0, &note, 0x64, MIDIStatus::NoteOn, 0x11);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_midi_channel_message_invalid_velocity() {
+        let note = crate::midi_note::MIDINote::new(crate::midi_note::MIDINoteType::C, 4);
+        // Invalid velocity 0x81
+        let _ = MIDIChannelVoiceMessage::new(0, &note, 0x81, MIDIStatus::NoteOn, 0);
+    }
+
+    #[test]
+    fn test_midi_channel_message_rest_note() {
+        let note = crate::midi_note::MIDINote::new(crate::midi_note::MIDINoteType::Rest, 4);
+        let event = MIDIChannelVoiceMessage::new(0, &note, 0x64, MIDIStatus::NoteOn, 0);
+        assert_eq!(0, event.velocity);
     }
 }

@@ -28,6 +28,8 @@ pub use midi_event::*;
 pub use midi_file::*;
 pub use midi_note::*;
 
+// TODO: Finish writing tests for each module
+
 // #[cfg(test)]
 // mod tests {
 //     use super::*;

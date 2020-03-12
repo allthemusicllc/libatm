@@ -314,4 +314,18 @@ mod tests {
         ));
         assert_eq!(expected, observed);
     }
+
+    #[test]
+    fn test_midi_note_set_from_str_extra_comma() {
+        // NOTE: Any invalid MIDINote in the input sequence
+        //       should trigger a ParseMIDINoteError, so only
+        //       one is tested here (picked arbitarily).
+        let input = "C:4,C:8,D:6,".to_string();
+        let observed = input.as_str().parse::<MIDINoteSet>();
+        let expected = Err(ParseMIDINoteSetError::ParseMIDINote(
+            3, 
+            ParseMIDINoteError::InvalidNoteFormat { input: "".to_string() },
+        ));
+        assert_eq!(expected, observed);
+    }
 }

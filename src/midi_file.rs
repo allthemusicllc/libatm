@@ -122,7 +122,7 @@ pub fn gen_midi_file_size(num_notes: u32) -> u32 {
 /// different notes and instruments playing simultaneously.  This library
 /// was created for the express purpose of brute-forcing melodies, and thus
 /// only supports a subset of the official MIDI standard.  More specifically,
-/// this class is optimized for creating the smallest possible single track MIDI
+/// this implementation is optimized to create the smallest possible single track MIDI
 /// files.
 #[derive(Clone, Debug)]
 pub struct MIDIFile {
@@ -253,18 +253,18 @@ impl MIDIFile {
         Ok(())
     }
 
-    /// Generate buffer containing entire MIDI file
-    pub fn gen_file(&self) -> std::io::Result<Vec<u8>> {
-        let mut buffer = Vec::with_capacity(self.gen_size() as usize);
-        self.write_buffer(&mut buffer)?;
-        Ok(buffer)
-    }
-
     /// Write MIDI file to path on disk
     pub fn write_file<P: AsRef<std::path::Path>>(&self, path: P) -> std::io::Result<()> {
         let target_file = std::fs::File::create(path)?;
         let mut target_file = std::io::BufWriter::new(target_file);
         self.write_buffer(&mut target_file)?;
         Ok(())
+    }
+
+    /// Generate buffer containing entire MIDI file
+    pub fn gen_file(&self) -> std::io::Result<Vec<u8>> {
+        let mut buffer = Vec::with_capacity(self.gen_size() as usize);
+        self.write_buffer(&mut buffer)?;
+        Ok(buffer)
     }
 }
