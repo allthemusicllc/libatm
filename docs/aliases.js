@@ -1,3 +1,9 @@
 var ALIASES = {};
 ALIASES["byteorder"] = {};
 ALIASES["libatm"] = {};
+ALIASES["proc_macro2"] = {};
+ALIASES["quote"] = {};
+ALIASES["syn"] = {};
+ALIASES["thiserror"] = {};
+ALIASES["thiserror_impl"] = {};
+ALIASES["unicode_xid"] = {};
