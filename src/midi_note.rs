@@ -238,6 +238,13 @@ impl std::ops::Deref for MIDINoteSet {
     }
 }
 
+impl From<&MIDINoteSet> for Vec<MIDINote> {
+    // Allow conversion from &MIDINoteSet to Vec<MIDINote>
+    fn from(set: &MIDINoteSet) -> Self {
+        set.iter().map(|n| n.clone()).collect::<Vec<MIDINote>>()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
