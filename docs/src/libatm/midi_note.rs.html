@@ -351,7 +351,7 @@
 <span class="doccomment">/// is an enharmonic key.  Each note type must be combined with an</span>
 <span class="doccomment">/// integer value to fully represent a key on the piano (see: [MIDINote](struct.MIDINote.html)).</span>
 <span class="doccomment">/// The `Rest` note type represents silence, or the absence of a note.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">Ord</span>, <span class="ident">PartialEq</span>, <span class="ident">PartialOrd</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">MIDINoteType</span> {
     <span class="ident">C</span>,
     <span class="ident">CSharp</span>,
@@ -443,7 +443,7 @@
 <span class="doccomment">/// `MIDINote { note_type: MIDINoteType::C, octave: 4 }`.  For a detailed table</span>
 <span class="doccomment">/// of MIDI notes and octave numbers, see document here:</span>
 <span class="doccomment">/// &lt;https://www.cs.cmu.edu/~music/cmsip/readings/Standard-MIDI-file-format-updated.pdf&gt;.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">Ord</span>, <span class="ident">PartialEq</span>, <span class="ident">PartialOrd</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MIDINote</span> {
     <span class="kw">pub</span> <span class="ident">note_type</span>: <span class="ident">MIDINoteType</span>,
     <span class="kw">pub</span> <span class="ident">octave</span>: <span class="ident">u32</span>,
@@ -532,14 +532,14 @@
 <span class="doccomment">///     libatm::MIDINote::new(libatm::MIDINoteType::D, 5),</span>
 <span class="doccomment">///     libatm::MIDINote::new(libatm::MIDINoteType::CSharp, 8),</span>
 <span class="doccomment">///     libatm::MIDINote::new(libatm::MIDINoteType::DSharp, 3),</span>
-<span class="doccomment">/// ].into_iter().collect::&lt;std::collections::HashSet&lt;libatm::MIDINote&gt;&gt;());</span>
+<span class="doccomment">/// ].into_iter().collect::&lt;std::collections::BTreeSet&lt;libatm::MIDINote&gt;&gt;());</span>
 <span class="doccomment">/// assert_eq!(expected, note_set);</span>
 <span class="doccomment">/// ```</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MIDINoteSet</span>(<span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">MIDINote</span><span class="op">&gt;</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MIDINoteSet</span>(<span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">MIDINote</span><span class="op">&gt;</span>);
 
 <span class="kw">impl</span> <span class="ident">MIDINoteSet</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">notes</span>: <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">MIDINote</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">notes</span>: <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">MIDINote</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span>(<span class="ident">notes</span>)
     }
 }
@@ -556,13 +556,13 @@
                 <span class="ident">pair</span>.<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">MIDINote</span><span class="op">&gt;</span>()
                     .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">ParseMIDINoteSetError</span>::<span class="ident">ParseMIDINote</span>(<span class="ident">idx</span>, <span class="ident">err</span>))
             })
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">MIDINote</span><span class="op">&gt;</span>, <span class="ident">ParseMIDINoteSetError</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">MIDINote</span><span class="op">&gt;</span>, <span class="ident">ParseMIDINoteSetError</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>(<span class="ident">notes</span>))
     }
 }
 
 <span class="kw">impl</span> <span class="ident">std</span>::<span class="ident">ops</span>::<span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">MIDINoteSet</span> {
-    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">MIDINote</span><span class="op">&gt;</span>;
+    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">MIDINote</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Allow dereferencing of tuple struct to underlying hash set</span>
     <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="self">Self</span>::<span class="ident">Target</span> {
@@ -619,7 +619,7 @@
             <span class="ident">MIDINote</span>::<span class="ident">new</span>(<span class="ident">MIDINoteType</span>::<span class="ident">F</span>, <span class="number">4</span>),
             <span class="ident">MIDINote</span>::<span class="ident">new</span>(<span class="ident">MIDINoteType</span>::<span class="ident">FSharp</span>, <span class="number">4</span>),
             <span class="ident">MIDINote</span>::<span class="ident">new</span>(<span class="ident">MIDINoteType</span>::<span class="ident">CSharp</span>, <span class="number">5</span>),
-        ].<span class="ident">into_iter</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">MIDINote</span><span class="op">&gt;</span><span class="op">&gt;</span>()));
+        ].<span class="ident">into_iter</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">MIDINote</span><span class="op">&gt;</span><span class="op">&gt;</span>()));
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">expected</span>, <span class="ident">observed</span>);
     }
 
@@ -629,7 +629,7 @@
         <span class="kw">let</span> <span class="ident">expected</span> <span class="op">=</span> <span class="prelude-val">Ok</span>(<span class="ident">MIDINoteSet</span>::<span class="ident">new</span>(<span class="macro">vec</span><span class="macro">!</span>[
             <span class="ident">MIDINote</span>::<span class="ident">new</span>(<span class="ident">MIDINoteType</span>::<span class="ident">C</span>, <span class="number">4</span>),
             <span class="ident">MIDINote</span>::<span class="ident">new</span>(<span class="ident">MIDINoteType</span>::<span class="ident">D</span>, <span class="number">5</span>),
-        ].<span class="ident">into_iter</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">MIDINote</span><span class="op">&gt;</span><span class="op">&gt;</span>()));
+        ].<span class="ident">into_iter</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">MIDINote</span><span class="op">&gt;</span><span class="op">&gt;</span>()));
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">expected</span>, <span class="ident">observed</span>);
     }
 

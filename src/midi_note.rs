@@ -19,7 +19,7 @@ pub enum ParseMIDINoteTypeError {
 /// is an enharmonic key.  Each note type must be combined with an
 /// integer value to fully represent a key on the piano (see: [MIDINote](struct.MIDINote.html)).
 /// The `Rest` note type represents silence, or the absence of a note.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum MIDINoteType {
     C,
     CSharp,
@@ -111,7 +111,7 @@ pub enum ParseMIDINoteError {
 /// `MIDINote { note_type: MIDINoteType::C, octave: 4 }`.  For a detailed table
 /// of MIDI notes and octave numbers, see document here:
 /// <https://www.cs.cmu.edu/~music/cmsip/readings/Standard-MIDI-file-format-updated.pdf>.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct MIDINote {
     pub note_type: MIDINoteType,
     pub octave: u32,
@@ -200,14 +200,14 @@ pub enum ParseMIDINoteSetError {
 ///     libatm::MIDINote::new(libatm::MIDINoteType::D, 5),
 ///     libatm::MIDINote::new(libatm::MIDINoteType::CSharp, 8),
 ///     libatm::MIDINote::new(libatm::MIDINoteType::DSharp, 3),
-/// ].into_iter().collect::<std::collections::HashSet<libatm::MIDINote>>());
+/// ].into_iter().collect::<std::collections::BTreeSet<libatm::MIDINote>>());
 /// assert_eq!(expected, note_set);
 /// ```
 #[derive(Clone, Debug, PartialEq)]
-pub struct MIDINoteSet(std::collections::HashSet<MIDINote>);
+pub struct MIDINoteSet(std::collections::BTreeSet<MIDINote>);
 
 impl MIDINoteSet {
-    pub fn new(notes: std::collections::HashSet<MIDINote>) -> Self {
+    pub fn new(notes: std::collections::BTreeSet<MIDINote>) -> Self {
         Self(notes)
     }
 }
@@ -224,13 +224,13 @@ impl std::str::FromStr for MIDINoteSet {
                 pair.parse::<MIDINote>()
                     .map_err(|err| ParseMIDINoteSetError::ParseMIDINote(idx, err))
             })
-            .collect::<Result<std::collections::HashSet<MIDINote>, ParseMIDINoteSetError>>()?;
+            .collect::<Result<std::collections::BTreeSet<MIDINote>, ParseMIDINoteSetError>>()?;
         Ok(Self(notes))
     }
 }
 
 impl std::ops::Deref for MIDINoteSet {
-    type Target = std::collections::HashSet<MIDINote>;
+    type Target = std::collections::BTreeSet<MIDINote>;
 
     /// Allow dereferencing of tuple struct to underlying hash set
     fn deref(&self) -> &Self::Target {
@@ -287,7 +287,7 @@ mod tests {
             MIDINote::new(MIDINoteType::F, 4),
             MIDINote::new(MIDINoteType::FSharp, 4),
             MIDINote::new(MIDINoteType::CSharp, 5),
-        ].into_iter().collect::<std::collections::HashSet<MIDINote>>()));
+        ].into_iter().collect::<std::collections::BTreeSet<MIDINote>>()));
         assert_eq!(expected, observed);
     }
 
@@ -297,7 +297,7 @@ mod tests {
         let expected = Ok(MIDINoteSet::new(vec![
             MIDINote::new(MIDINoteType::C, 4),
             MIDINote::new(MIDINoteType::D, 5),
-        ].into_iter().collect::<std::collections::HashSet<MIDINote>>()));
+        ].into_iter().collect::<std::collections::BTreeSet<MIDINote>>()));
         assert_eq!(expected, observed);
     }
 
