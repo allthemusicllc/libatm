@@ -176,9 +176,10 @@ impl<'a> std::str::FromStr for MIDINote {
     }
 }
 
-/// Error type for parsing [MIDINoteSet](struct.MIDINoteSet.html) from `&str`
+/// Error type for parsing [MIDINoteSet](struct.MIDINoteSet.html) and 
+/// Vec<[MIDINote](struct.MIDINote.html)> from `&str`
 #[derive(Debug, PartialEq, thiserror::Error)]
-pub enum ParseMIDINoteSetError {
+pub enum ParseMIDINoteSequenceError {
     #[error("Invalid note at index {0}")]
     ParseMIDINote(usize, #[source] ParseMIDINoteError),
 }
@@ -195,7 +196,7 @@ pub enum ParseMIDINoteSetError {
 /// // Parse MIDI note set from &str
 /// let note_set = "C:4,D:5,CSharp:8,DSharp:3".parse::<libatm::MIDINoteSet>().unwrap();
 /// // Expected note set contains C:4, D:5, CSharp:8, and DSharp:3
-/// let expected = libatm::MIDINoteSet::new(vec![
+/// let expected = libatm::MIDINoteSet(vec![
 ///     libatm::MIDINote::new(libatm::MIDINoteType::C, 4),
 ///     libatm::MIDINote::new(libatm::MIDINoteType::D, 5),
 ///     libatm::MIDINote::new(libatm::MIDINoteType::CSharp, 8),
@@ -204,30 +205,7 @@ pub enum ParseMIDINoteSetError {
 /// assert_eq!(expected, note_set);
 /// ```
 #[derive(Clone, Debug, PartialEq)]
-pub struct MIDINoteSet(std::collections::BTreeSet<MIDINote>);
-
-impl MIDINoteSet {
-    pub fn new(notes: std::collections::BTreeSet<MIDINote>) -> Self {
-        Self(notes)
-    }
-}
-
-impl std::str::FromStr for MIDINoteSet {
-    type Err = ParseMIDINoteSetError;
-
-    /// Credit to [@ldesgoui](https://github.com/ldesgoui) for the implementation
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let notes = s
-            .split(',')
-            .enumerate()
-            .map(|(idx, pair)| {
-                pair.parse::<MIDINote>()
-                    .map_err(|err| ParseMIDINoteSetError::ParseMIDINote(idx, err))
-            })
-            .collect::<Result<std::collections::BTreeSet<MIDINote>, ParseMIDINoteSetError>>()?;
-        Ok(Self(notes))
-    }
-}
+pub struct MIDINoteSet(pub std::collections::BTreeSet<MIDINote>);
 
 impl std::ops::Deref for MIDINoteSet {
     type Target = std::collections::BTreeSet<MIDINote>;
@@ -238,10 +216,89 @@ impl std::ops::Deref for MIDINoteSet {
     }
 }
 
-impl From<&MIDINoteSet> for Vec<MIDINote> {
+impl std::str::FromStr for MIDINoteSet {
+    type Err = ParseMIDINoteSequenceError;
+
+    /// Credit to [@ldesgoui](https://github.com/ldesgoui) for the implementation
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let notes = s
+            .split(',')
+            .enumerate()
+            .map(|(idx, pair)| {
+                pair.parse::<MIDINote>()
+                    .map_err(|err| ParseMIDINoteSequenceError::ParseMIDINote(idx, err))
+            })
+            .collect::<Result<std::collections::BTreeSet<MIDINote>, ParseMIDINoteSequenceError>>()?;
+        Ok(Self(notes))
+    }
+}
+
+/// Container for vector of `MIDINote`
+///
+/// Implements the [FromStr](https://doc.rust-lang.org/nightly/core/str/trait.FromStr.html)
+/// trait as a convenience method for parsing a list of `MIDINote` (from a command line
+/// argument).
+///
+/// # Examples
+///
+/// ```rust
+/// // Parse MIDI note set from &str
+/// let note_set = "C:4,D:5,CSharp:8,DSharp:3".parse::<libatm::MIDINoteVec>().unwrap();
+/// // Expected note set contains C:4, D:5, CSharp:8, and DSharp:3
+/// let expected = libatm::MIDINoteVec(vec![
+///     libatm::MIDINote::new(libatm::MIDINoteType::C, 4),
+///     libatm::MIDINote::new(libatm::MIDINoteType::D, 5),
+///     libatm::MIDINote::new(libatm::MIDINoteType::CSharp, 8),
+///     libatm::MIDINote::new(libatm::MIDINoteType::DSharp, 3),
+/// ]);
+/// assert_eq!(expected, note_set);
+/// ```
+#[derive(Clone, Debug, PartialEq)]
+pub struct MIDINoteVec(pub Vec<MIDINote>);
+
+impl std::ops::Deref for MIDINoteVec {
+    type Target = Vec<MIDINote>;
+
+    /// Allow dereferencing of tuple struct to underlying hash set
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::str::FromStr for MIDINoteVec {
+    type Err = ParseMIDINoteSequenceError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let notes = s
+            .split(',')
+            .enumerate()
+            .map(|(idx, pair)| {
+                pair.parse::<MIDINote>()
+                    .map_err(|err| ParseMIDINoteSequenceError::ParseMIDINote(idx, err))
+            })
+            .collect::<Result<Vec<MIDINote>, ParseMIDINoteSequenceError>>()?;
+        Ok(Self(notes))
+    }
+}
+
+impl std::iter::FromIterator<MIDINote> for MIDINoteVec {
+    // Create MIDINoteVec from iterator over MIDINote
+    fn from_iter<I: IntoIterator<Item=MIDINote>>(iter: I) -> Self {
+        Self(iter.into_iter().collect::<Vec<MIDINote>>())
+    }
+}
+
+impl From<MIDINoteSet> for MIDINoteVec {
+    // Allow conversion from MIDINoteSet to Vec<MIDINote>
+    fn from(set: MIDINoteSet) -> Self {
+        set.0.into_iter().collect::<MIDINoteVec>()
+    }
+}
+
+impl From<&MIDINoteSet> for MIDINoteVec {
     // Allow conversion from &MIDINoteSet to Vec<MIDINote>
     fn from(set: &MIDINoteSet) -> Self {
-        set.iter().map(|n| n.clone()).collect::<Vec<MIDINote>>()
+        set.iter().map(|n| n.clone()).collect::<MIDINoteVec>()
     }
 }
 
@@ -287,7 +344,7 @@ mod tests {
     #[test]
     fn test_midi_note_set_from_str_valid_no_duplicate() {
         let observed = "C:4,D:4,E:4,F:4,F#:4,DFlat:5".parse::<MIDINoteSet>();
-        let expected = Ok(MIDINoteSet::new(vec![
+        let expected = Ok(MIDINoteSet(vec![
             MIDINote::new(MIDINoteType::C, 4),
             MIDINote::new(MIDINoteType::D, 4),
             MIDINote::new(MIDINoteType::E, 4),
@@ -301,7 +358,7 @@ mod tests {
     #[test]
     fn test_midi_note_set_from_str_valid_with_duplicate() {
         let observed = "C:4,C:4,D:5".parse::<MIDINoteSet>();
-        let expected = Ok(MIDINoteSet::new(vec![
+        let expected = Ok(MIDINoteSet(vec![
             MIDINote::new(MIDINoteType::C, 4),
             MIDINote::new(MIDINoteType::D, 5),
         ].into_iter().collect::<std::collections::BTreeSet<MIDINote>>()));
@@ -315,7 +372,7 @@ mod tests {
         //       one is tested here (picked arbitarily).
         let input = "C:4,CL:8,D:6".to_string();
         let observed = input.as_str().parse::<MIDINoteSet>();
-        let expected = Err(ParseMIDINoteSetError::ParseMIDINote(
+        let expected = Err(ParseMIDINoteSequenceError::ParseMIDINote(
             1, 
             ParseMIDINoteError::UnknownNoteType(ParseMIDINoteTypeError::UnknownNoteType { input: "CL".to_string(), }),
         ));
@@ -329,7 +386,7 @@ mod tests {
         //       one is tested here (picked arbitarily).
         let input = "C:4,C:8,D:6,".to_string();
         let observed = input.as_str().parse::<MIDINoteSet>();
-        let expected = Err(ParseMIDINoteSetError::ParseMIDINote(
+        let expected = Err(ParseMIDINoteSequenceError::ParseMIDINote(
             3, 
             ParseMIDINoteError::InvalidNoteFormat { input: "".to_string() },
         ));
