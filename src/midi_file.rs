@@ -127,7 +127,7 @@ pub fn gen_midi_file_size(num_notes: u32) -> u32 {
 #[derive(Clone, Debug)]
 pub struct MIDIFile {
     /// Sequence of notes to generate the track chunk from
-    pub sequence: Vec<crate::midi_note::MIDINote>,
+    pub sequence: crate::midi_note::MIDINoteVec,
     /// Format specification (should always be [MIDIFormat::0](enum.MIDIFormat.html#variant.Format0))
     pub format: MIDIFormat,
     /// Number of tracks in MIDI file (should always be `1`)
@@ -143,12 +143,7 @@ impl MIDIFile {
     ///
     /// ```rust
     /// let mfile = libatm::MIDIFile::new(
-    ///     vec![
-    ///         libatm::MIDINote::new(libatm::MIDINoteType::C, 4),
-    ///         libatm::MIDINote::new(libatm::MIDINoteType::CSharp, 8),
-    ///         libatm::MIDINote::new(libatm::MIDINoteType::D, 5),
-    ///         libatm::MIDINote::new(libatm::MIDINoteType::DSharp, 3),
-    ///     ],
+    ///     "C:4,CSharp:8,D:5,DSharp:3".parse::<libatm::MIDINoteVec>().unwrap(),
     ///     libatm::MIDIFormat::Format0,
     ///     1,
     ///     1,
@@ -156,7 +151,7 @@ impl MIDIFile {
     /// assert_eq!("601097451", mfile.gen_hash());
     /// ```
     pub fn new(
-        sequence: Vec<crate::midi_note::MIDINote>,
+        sequence: crate::midi_note::MIDINoteVec,
         format: MIDIFormat,
         tracks: u16,
         division: u16,
